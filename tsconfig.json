@@ -1,0 +1,25 @@
+{
+    "$schema": "https://raw.githubusercontent.com/TypeScriptToLua/TypeScriptToLua/master/tsconfig-schema.json",
+    "compilerOptions": {
+        "target": "ESNext",
+        "lib": [
+            "ESNext"
+        ],
+        "moduleResolution": "Node",
+        "types": [
+            "lua-types/5.2",
+            "@jackmacwindows/cc-types",
+            "@jackmacwindows/craftos-types"
+        ],
+        "strict": true,
+        // "outFile": "./dist/main.lua",
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "module": "amd"
+    },
+    "tstl": {
+        "luaTarget": "JIT",
+        "luaBundle": "build.lua",
+        "luaBundleEntry": "./src/main.ts"
+    }
+}
