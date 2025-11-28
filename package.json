@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "build": "tstl;python update.py",
+    "build": "tstl && python update.py",
     "dev": "tstl --watch"
   },
   "devDependencies": {

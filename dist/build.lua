@@ -2758,31 +2758,322 @@ return {
 }
  end,
 ["lib"] = function(...) 
---[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____lualib = require("lualib_bundle")
+local __TS__ObjectAssign = ____lualib.__TS__ObjectAssign
+local __TS__Class = ____lualib.__TS__Class
+local __TS__ArrayIsArray = ____lualib.__TS__ArrayIsArray
+local __TS__ArrayIncludes = ____lualib.__TS__ArrayIncludes
 local ____exports = {}
-local function dir_to_number(self, dir)
+____exports.FacingDirections = {"north", "south", "east", "west"}
+local function clockwise(self, dir)
+    local map = {
+        up = dir,
+        down = dir,
+        north = "east",
+        south = "west",
+        east = "south",
+        west = "north"
+    }
+    return map[dir]
 end
-function ____exports.turn_to(self, dir)
+local function counter_clockwise(self, dir)
+    local map = {
+        up = dir,
+        down = dir,
+        north = "west",
+        south = "east",
+        east = "north",
+        west = "south"
+    }
+    return map[dir]
+end
+local function reverse(self, dir)
+    local map = {
+        up = "down",
+        down = "up",
+        north = "south",
+        south = "north",
+        east = "west",
+        west = "east"
+    }
+    return map[dir]
+end
+function ____exports.move_point(self, point, dir)
+    local pnt = __TS__ObjectAssign({}, point)
+    local map = {
+        up = function() return pnt.y + 1 end,
+        down = function() return pnt.y - 1 end,
+        north = function() return pnt.z - 1 end,
+        south = function() return pnt.z + 1 end,
+        east = function() return pnt.x - 1 end,
+        west = function() return pnt.x + 1 end
+    }
+    map[dir](map)
+    return pnt
+end
+____exports.TurtleApi = __TS__Class()
+local TurtleApi = ____exports.TurtleApi
+TurtleApi.name = "TurtleApi"
+function TurtleApi.prototype.____constructor(self, point, direction)
+    if point == nil then
+        point = {x = 0, y = 0, z = 0}
+    end
+    if direction == nil then
+        direction = "north"
+    end
+    self.point = point
+    self.direction = direction
+end
+function TurtleApi.prototype.turnLeft(self)
+    self.direction = counter_clockwise(nil, self.direction)
     turtle.turnLeft()
+end
+function TurtleApi.prototype.turnRight(self)
+    self.direction = clockwise(nil, self.direction)
+    turtle.turnRight()
+end
+function TurtleApi.prototype.forward(self)
+    self:ensureFuel()
+    self.point = ____exports.move_point(nil, self.point, self.direction)
+    turtle.forward()
+end
+function TurtleApi.prototype.back(self)
+    self:ensureFuel()
+    self.point = ____exports.move_point(
+        nil,
+        self.point,
+        reverse(nil, self.direction)
+    )
+    turtle.back()
+end
+function TurtleApi.prototype.up(self)
+    self:ensureFuel()
+    self.point = ____exports.move_point(nil, self.point, "up")
+    turtle.up()
+end
+function TurtleApi.prototype.down(self)
+    self:ensureFuel()
+    self.point = ____exports.move_point(nil, self.point, "down")
+    turtle.down()
+end
+function TurtleApi.prototype.getItemDetail(self, index)
+    return turtle.getItemDetail(index)
+end
+function TurtleApi.prototype.select(self, index)
+    turtle.select(index)
+end
+function TurtleApi.prototype.turnTo(self, dir)
+    if dir ~= self.direction then
+        if dir == counter_clockwise(nil, self.direction) then
+            self:turnLeft()
+        else
+            self:turnRight()
+        end
+    end
+end
+function TurtleApi.prototype.turnToAxis(self, dir)
+    if dir ~= reverse(nil, dir) then
+        self:turnTo(dir)
+    end
+end
+function TurtleApi.prototype.move(self, dir)
+    if dir == "up" then
+        self:up()
+    elseif dir == "down" then
+        self:down()
+    else
+        self:turnTo(dir)
+        self:forward()
+    end
+end
+function TurtleApi.prototype.dig(self, dir)
+    if dir == "up" then
+        if turtle.detectUp() then
+            turtle.digUp()
+        end
+    elseif dir == "down" then
+        if turtle.detectDown() then
+            turtle.digDown()
+        end
+    else
+        self:turnTo(dir)
+        if turtle.detect() then
+            turtle.dig()
+        end
+    end
+end
+function TurtleApi.prototype.digMove(self, dir)
+    self:dig(dir)
+    self:move(dir)
+end
+function TurtleApi.prototype.ensureFuel(self)
+    local need_fuel = turtle.getFuelLevel() == 0
+    while need_fuel do
+        local found_item = self:selectItem({"minecraft:coal", "minecraft:coal_block", "minecaft:charcoal"})
+        if found_item then
+            turtle.refuel(1)
+            need_fuel = turtle.getFuelLevel() == 0
+        else
+            print("ERROR: could not find fuel")
+            sleep(5)
+        end
+    end
+end
+function TurtleApi.prototype.selectItem(self, item)
+    local items = __TS__ArrayIsArray(item) and item or ({item})
+    do
+        local j = 1
+        while j <= 16 do
+            local detail = self:getItemDetail(j)
+            if detail and __TS__ArrayIncludes(items, detail.name) then
+                self:select(j)
+                return true
+            end
+            j = j + 1
+        end
+    end
+    return false
+end
+return ____exports
+ end,
+["input"] = function(...) 
+local ____lualib = require("lualib_bundle")
+local __TS__StringStartsWith = ____lualib.__TS__StringStartsWith
+local __TS__StringSlice = ____lualib.__TS__StringSlice
+local __TS__ArrayIncludes = ____lualib.__TS__ArrayIncludes
+local __TS__Iterator = ____lualib.__TS__Iterator
+local __TS__ParseInt = ____lualib.__TS__ParseInt
+local ____exports = {}
+local ____lib = require("lib")
+local FacingDirections = ____lib.FacingDirections
+local function directionAutoComplete(partial)
+    local possible = {}
+    for ____, facing in ipairs(FacingDirections) do
+        if __TS__StringStartsWith(facing, partial) then
+            possible[#possible + 1] = __TS__StringSlice(facing, #partial)
+        end
+    end
+    return possible
+end
+local function isFacingDirection(self, x)
+    return __TS__ArrayIncludes(FacingDirections, x)
+end
+function ____exports.readDirection(self, prompt)
+    while true do
+        print(prompt)
+        local answer = read(nil, nil, directionAutoComplete)
+        if isFacingDirection(nil, answer) then
+            return answer
+        end
+    end
+end
+local LOCATION_REGEX = "^(-?%d+) (-?%d+) (-?%d+)"
+local PARTIAL_LOCATION_REGEX = "^-?(%d+( (-?(%d+( (-?(%d+)?)?)?)?)?)?)?"
+local LOCATION_CHARS = " -0123456789"
+local function locationAutoComplete(partial)
+    local possible = {}
+    for ____, char in __TS__Iterator(LOCATION_CHARS) do
+        local match = {string.match(partial .. char, PARTIAL_LOCATION_REGEX)}
+        print(partial .. char, match[1])
+        if #match ~= 0 then
+            possible[#possible + 1] = char
+        end
+    end
+    return possible
+end
+function ____exports.readLocation(self, prompt)
+    while true do
+        print(prompt)
+        local answer = read(nil, nil, locationAutoComplete)
+        local match = {string.match(answer, LOCATION_REGEX)}
+        if #match ~= 0 then
+            return {
+                x = __TS__ParseInt(match[1]),
+                y = __TS__ParseInt(match[2]),
+                z = __TS__ParseInt(match[3])
+            }
+        end
+    end
+end
+function ____exports.readTurtleLocation(self)
+    local location = ____exports.readLocation(nil, "Enter Starting Location:")
+    print(location)
+    local direction = ____exports.readDirection(nil, "Enter Starting Facing Direction:")
+    print(direction)
+    return {location, direction}
+end
+return ____exports
+ end,
+["programs.test"] = function(...) 
+local ____lualib = require("lualib_bundle")
+local __TS__New = ____lualib.__TS__New
+local ____exports = {}
+local ____lib = require("lib")
+local TurtleApi = ____lib.TurtleApi
+function ____exports.default(self)
+    local api = __TS__New(TurtleApi)
+    while true do
+        api:digMove("north")
+        api:digMove("east")
+        api:digMove("south")
+        api:digMove("west")
+        api:digMove("up")
+        api:digMove("down")
+    end
+end
+return ____exports
+ end,
+["programs.mine"] = function(...) 
+local ____lualib = require("lualib_bundle")
+local __TS__New = ____lualib.__TS__New
+local ____exports = {}
+local ____input = require("input")
+local readTurtleLocation = ____input.readTurtleLocation
+local ____lib = require("lib")
+local TurtleApi = ____lib.TurtleApi
+function ____exports.default(self)
+    local starting_location = readTurtleLocation(nil)
+    local api = __TS__New(
+        TurtleApi,
+        unpack(starting_location)
+    )
+    while true do
+        api:digMove("north")
+        api:digMove("north")
+        api:digMove("east")
+        api:digMove("east")
+        api:digMove("south")
+        api:digMove("south")
+        api:digMove("west")
+        api:digMove("west")
+        api:digMove("up")
+        api:digMove("up")
+        api:digMove("down")
+        api:digMove("down")
+    end
 end
 return ____exports
  end,
 ["main"] = function(...) 
 local ____lualib = require("lualib_bundle")
-local __TS__ArrayFilter = ____lualib.__TS__ArrayFilter
+local __TS__ArrayEntries = ____lualib.__TS__ArrayEntries
+local __TS__Iterator = ____lualib.__TS__Iterator
+local __TS__ParseInt = ____lualib.__TS__ParseInt
 local ____exports = {}
-local ____lib = require("lib")
-local turn_to = ____lib.turn_to
-local hi = "this works"
-print(hi)
-turtle.forward()
-local v = {1, 2, 3}
-print(v[1])
-print(math.sin(__TS__ArrayFilter(
-    v,
-    function(____, x) return x + 1 end
-)[1]))
-turn_to(nil, "east")
+local ____test = require("programs.test")
+local test_program = ____test.default
+local ____mine = require("programs.mine")
+local mine_program = ____mine.default
+print("Nate's ComputerCraft OS")
+local programs = {{"test", test_program}, {"mine", mine_program}}
+for ____, ____value in __TS__Iterator(__TS__ArrayEntries(programs)) do
+    local index = ____value[1]
+    local value = ____value[2]
+    print((tostring(index) .. ": ") .. value[1])
+end
+local value = __TS__ParseInt(read())
+local ____self_0 = programs[value + 1]
+____self_0[2](____self_0)
 return ____exports
  end,
 }

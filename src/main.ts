@@ -1,13 +1,19 @@
-import { Direction,turn_to } from "./lib";
+// import { TurtleApi } from "./lib";
 
-let hi = "this works";
-print(hi)
-turtle.forward()
+import test_program from "./programs/test"
+import mine_program from "./programs/mine"
 
-let v = [1, 2, 3];
+print("Nate's ComputerCraft OS")
 
-print(v[0])
+const programs: [string, () => void][] = [
+    ["test", test_program],
+    ["mine", mine_program]
+]
 
-print(Math.sin(v.filter(x => x + 1)[0]))
+for (let [index, value] of programs.entries()) {
+    print(`${index}: ${value[0]}`)
+}
 
-turn_to("east")
+let value = parseInt(read())
+
+programs[value][1]()
