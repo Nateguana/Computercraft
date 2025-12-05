@@ -1,0 +1,1 @@
+export function DecompressZlib(input: string): string | null;
