@@ -1,71 +1,80 @@
 import { readDirection, readTurtleLocation } from "../input";
 import { TurtleApi } from "../lib";
+import { POKEMON_DATA } from "./pokemon_data";
+// @ts-ignore
+import { decode } from "../base64"
+
+const POKEMON_BYTES = decode(POKEMON_DATA)
 
 function drawPixel(terminal: ITerminal, xPos: number, yPos: number) {
     terminal.setCursorPos(xPos, yPos)
     terminal.write(" ")
 }
 
+function drawPokemonPixel(terminal: ITerminal, color: number, index: number) {
+    terminal.setBackgroundColour(2 ** color);
+    let x = index % 37;
+    let y = Math.floor(index / 37);
+    drawPixel(terminal, x, y)
+}
+
+function drawPokemon(terminal: ITerminal, number: number) {
+    let palette_start = (number - 1) * 512;
+    for (let index = 0; index < 16; index++) {
+        let palette_index = palette_start + index * 3;
+        let [b1, b2, b3] = string.byte(POKEMON_BYTES, palette_index + 1, palette_index + 3);
+        let color = (b1 << 16) | (b2 << 8) | b3;
+        terminal.setPaletteColor(2 ** index, color);
+        // if (index < 8)
+        //     print(b1, b2, b3)
+    }
+    let pixel_start = palette_start + 16 * 3;
+    for (let index = 0; index < 37 * 25; index += 2) {
+        let byte = string.byte(POKEMON_BYTES, pixel_start + index / 2 + 1)
+        let high = byte >>> 4;
+        let low = byte & 0xf;
+        drawPokemonPixel(terminal, high, index);
+        drawPokemonPixel(terminal, low, index + 1);
+    }
+}
+
+function pickPokemon(): number {
+    if (math.random(1, 4) == 1) {
+        let better = [428, 134, 282]
+        let random = math.random(1, better.length)
+        return better[random - 1]
+    } else {
+        return math.random(1, 1025)
+    }
+}
+
 export default function Main() {
-    let pallete = [
-        0x000000,
-        0xF1DCA6,
-        0x996C55,
-        0xAA8F70,
-        0xC7B389,
-        0x775A48,
-        0x685F4B,
-        0xA39471,
-        0x968C6A,
-        0xA19672,
-        0xBCA982,
-        0x644838,
-        0x906A53,
-        0x6B5947,
-        0x87745B,
-        0xD3C595
-    ]
-    let image_data = [
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 12, 6, 14, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 1, 0, 12, 2, 2, 2, 2, 3, 12, 0, 0, 0, 8, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 5, 11, 5, 2, 2, 2, 3, 3, 2, 0, 1, 1, 15, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 5, 11, 2, 2, 2, 2, 2, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 1, 2, 11, 2, 2, 2, 3, 1, 1, 1, 4, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 13, 2, 2, 1, 1, 3, 5, 2, 2, 3, 1, 1, 1, 3, 2, 2, 12, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 3, 1, 3, 2, 2, 3, 1, 1, 4, 3, 2, 2, 2, 2, 3, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 6, 12, 2, 2, 10, 3, 3, 3, 3, 2, 3, 3, 2, 5, 3, 1, 2, 2, 2, 3, 1, 15, 6, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 8, 3, 3, 4, 1, 4, 2, 2, 3, 2, 2, 5, 5, 2, 12, 13, 1, 1, 3, 2, 2, 4, 1, 1, 9, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 8, 1, 1, 1, 1, 4, 4, 4, 3, 2, 2, 2, 5, 0, 0, 0, 0, 15, 1, 1, 1, 3, 4, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 6, 1, 1, 1, 1, 1, 4, 4, 10, 3, 3, 4, 2, 2, 7, 0, 8, 0, 9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 1, 1, 1, 1, 1, 1, 4, 10, 1, 3, 3, 1, 3, 3, 1, 1, 4, 0, 0, 15, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
-        0, 0, 0, 1, 1, 1, 1, 1, 1, 10, 4, 1, 1, 1, 1, 1, 1, 1, 1, 7, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-        0, 6, 1, 1, 1, 1, 1, 1, 1, 10, 3, 3, 4, 10, 4, 1, 4, 3, 3, 2, 12, 11, 11, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7, 0, 0,
-        0, 0, 1, 1, 1, 1, 1, 4, 4, 10, 4, 3, 2, 2, 5, 5, 2, 5, 5, 2, 2, 2, 2, 2, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 12, 0,
-        0, 1, 1, 1, 1, 1, 1, 4, 10, 4, 4, 4, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 3,
-        0, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 1, 3, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 7,
-        9, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 4, 9, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 3, 1, 1, 1, 1, 1, 1, 4, 4, 4, 3, 14, 0,
-        0, 0, 6, 3, 4, 4, 4, 4, 4, 7, 8, 8, 0, 0, 0, 13, 5, 2, 2, 5, 2, 3, 2, 4, 2, 13, 7, 4, 4, 10, 9, 7, 7, 9, 6, 0, 0,
-        0, 0, 0, 0, 8, 14, 6, 8, 14, 0, 0, 0, 0, 0, 0, 5, 5, 11, 11, 11, 0, 2, 3, 1, 3, 0, 0, 6, 14, 6, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 5, 5, 5, 0, 2, 3, 10, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 3, 3, 1, 1, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 3, 4, 1, 1, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 1, 1, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 1, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    ]
     let monitor = peripheral.wrap("left") as MonitorPeripheral
     monitor.setTextScale(.5)
+    // term.setTextScale(.5)
     // term.redirect(monitor)
     // let image = paintutils.parseImage(image_data)!
     // monitor.clear()
-    for (let index = 0; index < pallete.length; index++) {
-        monitor.setPaletteColor(2 ** index, pallete[index])
-    }
 
-    for (let y = 0; y < 25; y++) {
-        for (let x = 0; x < 37; x++) {
-            monitor.setBackgroundColor(2 ** image_data[y * 37 + x])
-            drawPixel(monitor, x, y)
-        }
+
+    while (true) {
+        let last_index = 0;
+        let index = 0;
+        do {
+            index = pickPokemon()
+        } while (last_index == index)
+        drawPokemon(monitor, index);
+        sleep(.5)
     }
+    // for (let index = 0; index < pallete.length; index++) {
+    //     monitor.setPaletteColor(2 ** index, pallete[index])
+    // }
+
+    // for (let y = 0; y < 25; y++) {
+    //     for (let x = 0; x < 37; x++) {
+    //         monitor.setBackgroundColor(2 ** image_data[y * 37 + x])
+    //         drawPixel(monitor, x, y)
+    //     }
+    // }
     // paintutils(image, 0, 0)
 }

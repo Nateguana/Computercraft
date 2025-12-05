@@ -1,5 +1,3 @@
-// import { TurtleApi } from "./lib";
-
 import test_program from "./programs/test"
 import mine_program from "./programs/mine"
 import poke_program from "./programs/pokemon"

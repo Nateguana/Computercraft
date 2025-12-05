@@ -1,0 +1,1 @@
+export function decode(this: void, input: string): string;

@@ -9,8 +9,14 @@
         "types": [
             "lua-types/5.2",
             "@jackmacwindows/cc-types",
-            "@jackmacwindows/craftos-types"
+            "@jackmacwindows/craftos-types",
+            // "node",
         ],
+        // "typeRoots": [
+        //     // "./node_modules/@types",
+        //     "./types",
+        //     "@jackmacwindows/cc-types"
+        // ],
         "strict": true,
         // "outFile": "./dist/main.lua",
         "outDir": "./dist",
@@ -18,8 +24,8 @@
         "module": "amd"
     },
     "tstl": {
-        "luaTarget": "JIT",
+        "luaTarget": "5.2",
         "luaBundle": "build.lua",
-        "luaBundleEntry": "./src/main.ts"
+        "luaBundleEntry": "./src/main.ts",
     }
 }

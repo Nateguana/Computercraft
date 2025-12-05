@@ -1,5 +1,18 @@
 import { readDirection, readTurtleLocation } from "../input";
-import { TurtleApi } from "../lib";
+import { Point, TurtleApi, RectanglePrism } from "../lib";
+
+function minePlus(api: TurtleApi, start: Point, end: Point) {
+    let rect = new RectanglePrism(start, end);
+    let loc = api.getLocation();
+    if (rect.isInside({ ...loc, y: loc.y + 1 }))
+        api.dig("up")
+    if (rect.isInside({ ...loc, y: loc.y - 1 }))
+        api.dig("down")
+    if (rect.isInside({ ...loc, x: loc.x - 1 }))
+        api.dig("east")
+    if (rect.isInside({ ...loc, x: loc.x + 1 }))
+        api.dig("west")
+}
 
 export default function Main() {
     let starting_location = readTurtleLocation()

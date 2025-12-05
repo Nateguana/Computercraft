@@ -108,12 +108,20 @@ export function move_point(point: Point, dir: Direction): Point {
 }
 
 export class TurtleApi {
-    point: Point;
-    direction: FacingDirection;
+    private point: Point;
+    private direction: FacingDirection;
 
     constructor(point: Point = { x: 0, y: 0, z: 0 }, direction: FacingDirection = "north") {
         this.point = point;
         this.direction = direction;
+    }
+
+    getDirection(): FacingDirection {
+        return this.direction;
+    }
+
+    getLocation(): Point {
+        return this.point
     }
 
 
@@ -237,4 +245,22 @@ export class TurtleApi {
         return false
     }
 
+}
+
+export class RectanglePrism {
+    p1: Point;
+    p2: Point;
+    constructor(p1: Point, p2: Point) {
+        this.p1 = p1;
+        this.p2 = p2;
+    }
+
+    isInside(point: Point): boolean {
+        return point.x > Math.min(this.p1.x, this.p2.x) &&
+            point.x < Math.max(this.p1.x, this.p2.x) &&
+            point.y > Math.min(this.p1.y, this.p2.y) &&
+            point.y < Math.max(this.p1.y, this.p2.y) &&
+            point.z > Math.min(this.p1.z, this.p2.z) &&
+            point.z < Math.max(this.p1.z, this.p2.z)
+    }
 }
